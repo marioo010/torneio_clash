@@ -6,7 +6,9 @@
 <meta name="description" content="Chaveamento de eliminação dupla do torneio de Clash Royale.">
 <meta name="theme-color" content="#16204a">
 <title>Torneio Clash Royale</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
 :root{
   --bg:#f1f3fb;--surface:#fff;--surface2:#e8ebf7;--text:#14183a;--muted:#5b6188;
@@ -325,7 +327,7 @@ dialog label{display:grid;gap:4px;font-weight:700;font-size:.9rem}
     if(c&&pl(c))h+='<div class="champ">🏆 Campeão: '+esc(pl(c).nome)+'</div>';
     var secs=[['W','Vencedores','Chave dos vencedores','Jogadores sem derrotas. Quem perde cai para a chave dos perdedores.'],
       ['L','Perdedores','Chave dos perdedores','Jogadores com uma derrota. Perder aqui significa eliminação.'],
-      ['F','Final (V X P)','Final','O invicto enfrenta o sobrevivente da chave dos perdedores. Se o sobrevivente vencer, há uma final decisiva.']];
+      ['F','FINAL (V X P)','Final','O invicto enfrenta o sobrevivente da chave dos perdedores. Se o sobrevivente vencer, há uma final decisiva.']];
     var html={},avail=[];
     secs.forEach(function(x){var t=section(x[0],x[2],x[3],R,L);if(t){html[x[0]]=t;avail.push(x)}});
     if(!html[sub])sub='W';
@@ -445,10 +447,14 @@ dialog label{display:grid;gap:4px;font-weight:700;font-size:.9rem}
     var saved=null;try{saved=sessionStorage.getItem(SKEY)}catch(e){}
     if(saved&&mode==='server')await login(saved);
     render();
-    setInterval(async function(){
+    async function refresh(){
       if(admin||mode!=='server'||document.hidden)return;
       try{var n=await fetchState();if(JSON.stringify(n)!==JSON.stringify(S)){S=n;render()}}catch(e){}
-    },15000);
+    }
+    setInterval(refresh,5000);
+    document.addEventListener('visibilitychange',refresh);
+    window.addEventListener('focus',refresh);
+    window.addEventListener('online',refresh);
   })();
 })();
 </script>
