@@ -231,24 +231,29 @@ dialog label{display:grid;gap:4px;font-weight:700;font-size:.9rem}
 
   /* Estrutura fixa de eliminação dupla: cada vaga aponta de onde vem o jogador */
   function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+  /* Monta a estrutura inteira de uma vez. Cada rodada pareia quem está em cada chave;
+     só há folga quando sobra um jogador (quantidade ímpar naquela chave e rodada). */
   function build(ids){
-    var n=ids.length,k=1;while((1<<k)<n)k++;
-    var P=1<<k,h=P/2,nb=P-n,M=[],pos=0,i,r;
-    function rev(x,b){var y=0;for(var j=0;j<b;j++)y=(y<<1)|((x>>j)&1);return y}
-    function add(br,r,i,sa,sb){M.push({id:br==='W'||br==='L'?br+r+'-'+i:br,br:br,r:r,i:i,sa:sa,sb:sb,winner:null})}
-    var bye={};for(i=0;i<nb;i++)bye[rev(i,k-1)]=1;
-    for(i=0;i<h;i++)add('W',1,i,{p:ids[pos++]},bye[i]?{p:null}:{p:ids[pos++]});
-    for(r=2;r<=k;r++)for(i=0;i<(P>>r);i++)add('W',r,i,{m:'W'+(r-1)+'-'+(2*i),t:'w'},{m:'W'+(r-1)+'-'+(2*i+1),t:'w'});
-    if(k>=2)for(r=1;r<=2*(k-1);r++){
-      var j=r>>1,cnt=r%2?P>>(j+2):P>>(j+1);
-      for(i=0;i<cnt;i++){
-        if(r===1)add('L',1,i,{m:'W1-'+(2*i),t:'l'},{m:'W1-'+(2*i+1),t:'l'});
-        else if(r%2===0)add('L',r,i,{m:'L'+(r-1)+'-'+i,t:'w'},{m:'W'+(j+1)+'-'+i,t:'l'});
-        else add('L',r,i,{m:'L'+(r-1)+'-'+(2*i),t:'w'},{m:'L'+(r-1)+'-'+(2*i+1),t:'w'});
-      }
+    var M=[],W=ids.map(function(id){return{p:id}}),L=[],r=0;
+    function add(br,r,i,sa,sb){
+      var id=(br==='W'||br==='L')?br+r+'-'+i:br;
+      M.push({id:id,br:br,r:r,i:i,sa:sa,sb:sb,winner:null});return id;
     }
-    add('GF',1,0,{m:'W'+k+'-0',t:'w'},k>=2?{m:'L'+(2*(k-1))+'-0',t:'w'}:{m:'W1-0',t:'l'});
-    add('GF2',2,0,{g:'a'},{g:'b'});
+    function round(br,r,G){
+      var win=[],drop=[],i,id;
+      if(G.length<2)return{win:G.slice(),drop:drop};
+      for(i=0;i+1<G.length;i+=2){id=add(br,r,i/2,G[i],G[i+1]);win.push({m:id,t:'w'});drop.push({m:id,t:'l'})}
+      if(G.length%2){id=add(br,r,(G.length-1)/2,G[G.length-1],{p:null});win.push({m:id,t:'w'})}
+      return{win:win,drop:drop};
+    }
+    while(r<200){
+      r++;
+      if(W.length===1&&L.length===1){add('GF',1,0,W[0],L[0]);add('GF2',2,0,{g:'a'},{g:'b'});break}
+      var a=round('W',r,W),b=round('L',r,L),nl=[],k=Math.max(b.win.length,a.drop.length),j;
+      W=a.win;
+      for(j=0;j<k;j++){if(j<b.win.length)nl.push(b.win[j]);if(j<a.drop.length)nl.push(a.drop[j])}
+      L=nl;
+    }
     return M;
   }
   /* Calcula quem ocupa cada vaga. Valores: id do jogador, 'BYE' (folga) ou null (aguardando). */
